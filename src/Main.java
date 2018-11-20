@@ -1,4 +1,5 @@
-import Model.Machine;
+import Minimizator.Minimizator;
+import Model.Machine.Machine;
 
 import java.io.File;
 
@@ -14,9 +15,11 @@ public class Main {
         Machine m = new Machine();
         m.loadFromFile(new File("res\\machine.txt"));
         System.out.println(m);
-        m.setCurrentState(1);
 
-      
+        Minimizator minimizator = new Minimizator(m);
+        minimizator.Minimize();
+
+
     }
 
 }

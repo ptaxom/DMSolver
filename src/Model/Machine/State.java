@@ -1,11 +1,10 @@
-package Model;
+package Model.Machine;
 
+import Model.EquivalentType;
 import Model.Exceptions.DifferentSizesException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by ptaxom on 20.11.2018.

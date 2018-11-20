@@ -1,10 +1,12 @@
-package Model;
+package Model.Machine;
 
+import Model.EquivalentType;
 import Model.Exceptions.MachineLoadException;
 import Model.Exceptions.MachineRuntimeException;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Set;
 
 /**
  * Created by ptaxom on 20.11.2018.
@@ -17,10 +19,12 @@ public class Machine {
         this.conversionTable = conversionTable;
     }
 
+    private int inputWords;
+    private int possibleStates;
+
+
     public Machine() {
     }
-
-
 
 
     public void loadFromFile(File file) {
@@ -47,6 +51,27 @@ public class Machine {
             throw ex;
         }
 
+        assertMachine();
+    }
+
+    private void assertMachine()
+    {
+        Set<Integer> states = conversionTable.keySet();
+        int size = -1;
+        for(Integer i : states)
+        {
+            State state = conversionTable.get(i);
+            if (size == -1)
+                size = state.getTransitionList().size();
+            if (state.getTransitionList().size() != size)
+                throw new MachineLoadException("Incorrect machine!(Differences sizes in state " + i+")");
+            for(Transition t : state.getTransitionList())
+                if (!states.contains(t.getNextTransition()))
+                    throw new MachineLoadException("Incorrect machine!(Illegal next state in state " + i+" with next state "
+                            +t.getNextTransition()+")");
+        }
+        inputWords = size;
+        possibleStates = conversionTable.size();
     }
 
     @Override
@@ -98,4 +123,32 @@ public class Machine {
         return output;
     }
 
+    public HashMap<Integer, State> getConversionTable() {
+        return conversionTable;
+    }
+
+    public int getInputWords() {
+        return inputWords;
+    }
+
+    public int getPossibleStates() {
+        return possibleStates;
+    }
+
+    public EquivalentType[][] getEquivalentMatrix(){
+        int size = possibleStates;
+        EquivalentType[][] matrix = new EquivalentType[size][size];
+        for(int i : conversionTable.keySet())
+            for(int j : conversionTable.keySet())
+                if (i != j)
+                {
+                    State s1 = conversionTable.get(i);
+                    State s2 = conversionTable.get(j);
+                    EquivalentType type = s1.compare(s2);
+                    matrix[i][j] = type;
+                    matrix[j][i] = type;
+                }
+                else matrix[i][j] = EquivalentType.UNDEFINED;
+        return matrix;
+    }
 }

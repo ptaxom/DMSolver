@@ -1,5 +1,6 @@
-package Model;
+package Model.Machine;
 
+import Model.EquivalentType;
 import Model.Exceptions.MachineLoadException;
 
 import java.util.regex.Matcher;
