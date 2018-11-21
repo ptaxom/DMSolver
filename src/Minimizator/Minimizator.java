@@ -5,6 +5,9 @@ import Model.Machine.Machine;
 import Model.Machine.MachineEngine;
 import javafx.util.Pair;
 
+import javax.crypto.Mac;
+import java.util.HashMap;
+
 /**
  * Created by ptaxom on 20.11.2018.
  */
@@ -18,35 +21,38 @@ public class Minimizator {
 
     private EquivalentType[][] matrix = null;
 
-    public void Minimize()
+    public Machine Minimize()
     {
         matrix = m.getEquivalentMatrix();
 
-        printMatrix();
+        for(int i = 0; i < m.getPossibleStates(); i++)
+            for(int j = i + 1; j < m.getPossibleStates(); j++)
+                if (matrix[i][j] == EquivalentType.UNDEFINED)
+                {
+                    MachineEngine m1 = new MachineEngine(m,i);
+                    MachineEngine m2 = new MachineEngine(m,j);
+                    StateDefiner stateDefiner = new StateDefiner(m1,m2);
+                    DefineStates(i,j,
+                            stateDefiner.DefineDoubleState(stateDefiner.DefineState(i,j)));
+                }
 
-//        for(int i = 0; i < m.getPossibleStates(); i++)
-//            for(int j = i + 1; j < m.getPossibleStates(); j++)
-//                if (matrix[i][j] == EquivalentType.UNDEFINED)
-//                {
-//                    MachineEngine m1 = new MachineEngine(m,i);
-//                    MachineEngine m2 = new MachineEngine(m,j);
-//                    StateDefiner stateDefiner = new StateDefiner(m1,m2);
-//                    DefineStates(i,j,
-//                            stateDefiner.DefineDoubleState(stateDefiner.DefineState(i,j)));
-//                }
-
+        MachineStateEncoder encoder = new MachineStateEncoder(matrix);
+        return m.getCodedMachine(encoder.Encode());
     }
 
-    public void printMatrix(){
+    private void printMatrix(){
         for(int i = 0; i < m.getPossibleStates(); i++) {
             for (int j = 0; j < m.getPossibleStates(); j++)
-                System.out.printf("%.2f ", matrix[i][j].getType());
+                System.out.printf("%.1f ", matrix[i][j].getType());
             System.out.println();
         }
     }
 
 
-    public void DefineStates(int x, int y, EquivalentType type){
+
+
+
+    private void DefineStates(int x, int y, EquivalentType type){
         matrix[x][y] = type;
         matrix[y][x] = type;
     }
@@ -78,7 +84,10 @@ public class Minimizator {
                 Pair<Integer, Integer> prevStates = new Pair<>(m1.getState(), m2.getState());
                 double curType = 1.0;
                 if (!visited[m1.getNextState(i)][m2.getNextState(i)])
-                    curType = DefineState(m1.changeState(i),m2.changeState(i));
+                {
+                    m1.changeState(i); m2.changeState(i);
+                    curType = DefineState(m1.getState(), m2.getState());
+                }
                 if (curType == 0)
                     return 0.0;
                 m1.setState(prevStates.getKey());
@@ -95,5 +104,37 @@ public class Minimizator {
             else return EquivalentType.CLEARLY;
         }
     }
+
+
+    class MachineStateEncoder {
+
+        private boolean[] visited;
+        private EquivalentType[][] matrix;
+        HashMap<Integer, Integer> directMap = new HashMap<>();
+
+        public MachineStateEncoder(EquivalentType[][] matrix) {
+            this.matrix = matrix;
+            visited = new boolean[matrix.length];
+        }
+
+        void vertexDFS(int vertex, int type)
+        {
+            visited[vertex] = true;
+            directMap.put(vertex,type);
+            for(int i = 0; i < matrix.length; i++)
+                if (!visited[i] && (matrix[i][vertex] == EquivalentType.CLEARLY || matrix[vertex][i] == EquivalentType.CLEARLY))
+                    vertexDFS(i, type);
+        }
+
+
+        public HashMap<Integer, Integer> Encode(){
+            int type = 0;
+            for(int i = 0; i < matrix.length; i++)
+                if (!visited[i])
+                    vertexDFS(i,type++);
+            return directMap;
+        }
+    }
+
 
 }

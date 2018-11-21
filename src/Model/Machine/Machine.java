@@ -2,10 +2,10 @@ package Model.Machine;
 
 import Model.EquivalentType;
 import Model.Exceptions.MachineLoadException;
-import Model.Exceptions.MachineRuntimeException;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -14,13 +14,14 @@ import java.util.Set;
 public class Machine {
 
     private HashMap<Integer, State> conversionTable = null;
+    private HashMap<Integer, Integer> reflectionMap = null;
 
     public Machine(HashMap<Integer, State> conversionTable) {
         this.conversionTable = conversionTable;
     }
 
-    private int inputWords;
-    private int possibleStates;
+    private int inputWords = -1;
+    private int possibleStates = -1;
 
 
     public Machine() {
@@ -82,46 +83,8 @@ public class Machine {
         return out;
     }
 
-    private int currentState = 0;
 
-    public int getCurrentState() {
-        return currentState;
-    }
 
-    private void assertStateValue(int state){
-        if (!conversionTable.keySet().contains(state))
-            throw  new MachineRuntimeException("Unknown machine state");
-    }
-
-    public void setCurrentState(int currentState) {
-        assertStateValue(currentState);
-        this.currentState = currentState;
-    }
-
-    public int changeState(int inputValue) {
-        assertStateValue(currentState);
-
-        int output = -1;
-
-        State state = conversionTable.get(currentState);
-        try {
-            Transition t = state.getTransitionList().get(inputValue);
-            int nextState = t.getNextTransition();
-            assertStateValue(nextState);
-            output = t.getOutput();
-            currentState = nextState;
-        }
-        catch (ArrayIndexOutOfBoundsException ex) {
-            throw new MachineRuntimeException("Illigal keyword");
-        }
-        catch (MachineRuntimeException ex) {
-            throw ex;
-        }
-
-        if (output == -1)
-            throw new MachineRuntimeException("Illigal state");
-        return output;
-    }
 
     public HashMap<Integer, State> getConversionTable() {
         return conversionTable;
@@ -151,4 +114,41 @@ public class Machine {
                 else matrix[i][j] = EquivalentType.UNDEFINED;
         return matrix;
     }
+
+    private HashMap<Integer, Integer> directMap = null;
+    private HashMap<Integer, Integer> reverseMap = null;
+
+
+    private void BuildReflections(){
+        directMap = new HashMap<>();
+        reverseMap = new HashMap<>();
+        int key = 0;
+        for(Integer i : conversionTable.keySet())
+        {
+            directMap.put(i, key);
+            reverseMap.put(key, i);
+            key++;
+        }
+    }
+
+    public Machine getCodedMachine(HashMap<Integer, Integer> map){
+        HashMap<Integer, State> newConversionTable = new HashMap<>();
+
+        for(Map.Entry<Integer, State> entry : conversionTable.entrySet())
+            newConversionTable.put(map.get(entry.getKey()), entry.getValue().getCodedState(map));
+
+        Machine m = new Machine(newConversionTable);
+        int minKey = newConversionTable.keySet().iterator().next();
+        m.inputWords = newConversionTable.get(minKey).getTransitionList().size();
+        m.possibleStates = newConversionTable.size();
+
+        return m;
+    }
+
+    public Machine getCodedMachine(){
+        if (directMap == null)
+            BuildReflections();
+        return getCodedMachine(directMap);
+    }
+
 }

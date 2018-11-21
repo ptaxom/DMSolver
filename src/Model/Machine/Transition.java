@@ -3,6 +3,7 @@ package Model.Machine;
 import Model.EquivalentType;
 import Model.Exceptions.MachineLoadException;
 
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,7 @@ public class Transition {
         return m.matches();
     }
 
+
     private void parseString(String s){
         if (!isCorrectString(s))
             throw new MachineLoadException("Illigal transition: " + s);
@@ -61,5 +63,9 @@ public class Transition {
     @Override
     public String toString() {
         return nextTransition + ";" + output;
+    }
+
+    public Transition getCodedTransition(HashMap<Integer, Integer> codedStates){
+        return new Transition(codedStates.get(nextTransition), output);
     }
 }

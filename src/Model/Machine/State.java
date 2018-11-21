@@ -4,6 +4,7 @@ import Model.EquivalentType;
 import Model.Exceptions.DifferentSizesException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -58,5 +59,13 @@ public class State {
         for(Transition t : transitionList)
             out += t + " ";
         return out.trim();
+    }
+
+
+    public State getCodedState(HashMap<Integer, Integer> codedStates){
+        List<Transition> codedTransitions = new ArrayList<>();
+        for (Transition t : transitionList)
+            codedTransitions.add(t.getCodedTransition(codedStates));
+        return new State(codedTransitions);
     }
 }
